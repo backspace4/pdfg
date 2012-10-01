@@ -2,7 +2,7 @@
 # -*- python -*-
 
 __description__ = 'Tool to create a PDF object graph'
-__author__ = 'bacspace____'
+__author__ = 'backspace____'
 __version__ = '0.0.1'
 __date__ = '2012/09/17'
 
@@ -19,7 +19,7 @@ Todo:
 
 """
 
-
+import argparse
 import re
 import sys
 from collections import deque
@@ -90,6 +90,9 @@ def isIndirect(list):
 def getIndirectNum(list):
     return list[0]
 
+def debug(msg, flag):
+    if flag:
+        print msg
 
 class Tokenizer:
     """ a part of this class is from pdf-parser.py
@@ -129,12 +132,17 @@ class Tokenizer:
         return None
 
 def Main():
-    pdf = sys.argv[1]
-    output = "graph.png"
-    if len(sys.argv) > 2:
-        output = sys.argv[2]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_pdf", type=str,
+                        help="pdf file that will be analysed.")
+    parser.add_argument("-T", "--debug-with-token", type=bool,
+                        help="print token strings.")
+    parser.add_argument("-o", "--output-png", default="out.png",
+                        help="path to a png file to be written.",
+                        type=argparse.FileType('wb', 0))
+    args = parser.parse_args()
 
-    tk = Tokenizer(pdf)
+    tk = Tokenizer(args.input_pdf)
 
     queue = deque([tk.token(), tk.token(), tk.token()])
     obj_num = ""
@@ -151,13 +159,13 @@ def Main():
             if not gr.has_edge((obj_num, getIndirectNum(queue))):
                 gr.add_edge((obj_num, getIndirectNum(queue)))
 
-        queue.popleft()
+        debug(queue.popleft(), args.debug_with_token)
         queue.append(tk.token())
 
     dot = write(gr)
     gvv = gv.readstring(dot)
     gv.layout(gvv, 'dot')
-    gv.render(gvv, 'png', output)
+    gv.render(gvv, 'png', args.output_png)
 
 if __name__ == '__main__':
     Main()
