@@ -19,19 +19,21 @@ Todo:
 
 """
 
+import pickle
 import argparse
 import re
 import sys
 from collections import deque
 
 import gv
-from pygraph.classes.graph import graph
+#from pygraph.classes.graph import graph
 from pygraph.classes.digraph import digraph
 from pygraph.algorithms.searching import breadth_first_search
 from pygraph.readwrite.dot import write
 
 
 isint = re.compile('^\d+$')
+isname = re.compile('^/.+?')
 
 def isWhiteSpace(code):
     """tell if code is white space
@@ -57,7 +59,7 @@ def isDelimiter(code):
         or code == 0x5D
         or code == 0x7B
         or code == 0x7D
-        or code == 0x2F
+        #or code == 0x2F
         or code == 0x25):
         return True
     return False
@@ -89,6 +91,13 @@ def isIndirect(list):
 
 def getIndirectNum(list):
     return list[0]
+
+def getAttrName(list, default):
+    if not list[2]:
+        return default
+    if (isname.match(list[2])):
+        return list[2].replace("/", "")
+    return default
 
 def debug(msg, flag):
     if flag:
@@ -135,18 +144,19 @@ def Main():
     parser = argparse.ArgumentParser()
     parser.add_argument("input_pdf", type=str,
                         help="pdf file that will be analysed.")
-    parser.add_argument("-T", "--debug-with-token", type=bool,
+    parser.add_argument("-T", "--debug-with-token",action="store_true",
                         help="print token strings.")
     parser.add_argument("-o", "--output-png", default="out.png",
                         help="path to a png file to be written.",
-                        type=argparse.FileType('wb', 0))
+                        type=str)
     args = parser.parse_args()
 
     tk = Tokenizer(args.input_pdf)
 
     queue = deque([tk.token(), tk.token(), tk.token()])
     obj_num = ""
-    gr = graph()
+    attr = ""
+    gr = digraph()
 
     while not allNone(queue):
         if isObjToken(queue):
@@ -157,15 +167,18 @@ def Main():
             if not gr.has_node(getIndirectNum(queue)):
                 gr.add_node(getIndirectNum(queue))
             if not gr.has_edge((obj_num, getIndirectNum(queue))):
-                gr.add_edge((obj_num, getIndirectNum(queue)))
+                print "obj: " + obj_num + " to: " + getIndirectNum(queue)
+                gr.add_edge((obj_num, getIndirectNum(queue)), label=attr)
 
         debug(queue.popleft(), args.debug_with_token)
         queue.append(tk.token())
+        attr = getAttrName(queue, attr)
 
     dot = write(gr)
     gvv = gv.readstring(dot)
     gv.layout(gvv, 'dot')
     gv.render(gvv, 'png', args.output_png)
+
 
 if __name__ == '__main__':
     Main()
