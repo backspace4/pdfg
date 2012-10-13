@@ -167,7 +167,7 @@ def Main():
             if not gr.has_node(getIndirectNum(queue)):
                 gr.add_node(getIndirectNum(queue))
             if not gr.has_edge((obj_num, getIndirectNum(queue))):
-                print "obj: " + obj_num + " to: " + getIndirectNum(queue)
+                #print "obj: " + obj_num + " to: " + getIndirectNum(queue)
                 gr.add_edge((obj_num, getIndirectNum(queue)), label=attr)
 
         debug(queue.popleft(), args.debug_with_token)
