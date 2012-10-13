@@ -2,7 +2,7 @@
 ## SYNOPSIS
 pdfg [-h] [-T] [-o output.png] input.pdf 
 ## DESCRIPTION
-![image](./desc.png)
+![image](https://github.com/backspace4/pdfg/blob/master/desc.png?raw=true)
 ## OPTIONS
     -h, --help            show this help message and exit  
     -T, --debug-with-token    print token strings.  
