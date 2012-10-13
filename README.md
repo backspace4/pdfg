@@ -2,7 +2,7 @@
 ## SYNOPSIS
 pdfg [-h] [-T] [-o output.png] input.pdf 
 ## DESCRIPTION
-!(desc.png)
+![image](./desc.png)
 ## OPTIONS
     -h, --help            show this help message and exit  
     -T, --debug-with-token    print token strings.  
