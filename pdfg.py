@@ -33,7 +33,7 @@ from pygraph.readwrite.dot import write
 
 
 isint = re.compile('^\d+$')
-isname = re.compile('^/.+?')
+isname = re.compile('^.*/.+?')
 
 def isWhiteSpace(code):
     """tell if code is white space
@@ -71,21 +71,34 @@ def allNone(list):
         return True
     return False
 
+endobj=False
+trailer=False
+
 def isObjToken(list):
-#    print list
+    global endobj
+    global trailer
+
     if (isint.match(list[0]) and
         isint.match(list[1]) and
         list[2] == "obj"):
+        endobj=False
+        return True
+    if (list[2] == "endobj"):
+        endobj=True
+    if (endobj and list[2] == "trailer"):
+        trailer=True
         return True
     return False
 
 def getObjNum(list):
+    if trailer:
+        return "trailer"
     return list[0]
 
 def isIndirect(list):
     if (isint.match(list[0]) and
         isint.match(list[1]) and
-        list[2] == "R"):
+        (list[2] == "R" or re.search('^R/', list[2]) != None)):
         return True
     return False
 
@@ -96,7 +109,8 @@ def getAttrName(list, default):
     if not list[2]:
         return default
     if (isname.match(list[2])):
-        return list[2].replace("/", "")
+        ret = re.sub(r'^.*/', '', list[2])
+        return ret
     return default
 
 def debug(msg, flag):
@@ -160,6 +174,7 @@ def Main():
 
     while not allNone(queue):
         if isObjToken(queue):
+            attr = ""
             obj_num = getObjNum(queue)
             if not gr.has_node(obj_num):
                 gr.add_node(obj_num)
@@ -170,9 +185,10 @@ def Main():
                 #print "obj: " + obj_num + " to: " + getIndirectNum(queue)
                 gr.add_edge((obj_num, getIndirectNum(queue)), label=attr)
 
+        attr = getAttrName(queue, attr)
         debug(queue.popleft(), args.debug_with_token)
         queue.append(tk.token())
-        attr = getAttrName(queue, attr)
+
 
     dot = write(gr)
     gvv = gv.readstring(dot)
